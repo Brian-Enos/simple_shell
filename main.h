@@ -30,7 +30,9 @@ int lsh_help(char **args);
 int lsh_exit(char **args);
 int lsh_execute(char **args);
 int lsh_num_builtins();
-
+char* read_command();
+char** parse_command(char* command);
+int execute_command(char** args);
 char *builtin_str[] = {
   "cd",
   "help",
