@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,204 +13,202 @@ void print_prompt();
 int parse_input(char* input, char** args);
 void execute_command(char** args);
 void free_args(char** args, int num_args);
+void lsh_loop(void);
+char *lsh_read_line(void);
+char **lsh_split_line(char *line);
+int lsh_launch(char **args);
+int lsh_cd(char **args);
+int lsh_help(char **args);
+int lsh_exit(char **args);
+int lsh_execute(char **args);
+int lsh_num_builtins();
 
-int main(int argc, char** argv) {
-    char input[MAX_INPUT_LENGTH];
-    char* args[MAX_ARGS];
-    int status;
+// List of builtin commands, followed by their corresponding functions.
+char *builtin_str[] = {
+  "cd",
+  "help",
+  "exit"
+};
 
-    /*
-    * Register a signal handler for SIGINT (interrupt signal)
-    */
-    signal(SIGINT, handle_sigint);
+int (*builtin_func[]) (char **) = {
+  &lsh_cd,
+  &lsh_help,
+  &lsh_exit
+};
 
-    while (1) {
-        print_prompt(); // Print the shell prompt
-        if (fgets(input, MAX_INPUT_LENGTH, stdin) == NULL) {
-            if (feof(stdin)) {
-                printf("\n"); // Print a newline character
-                exit(EXIT_SUCCESS); // Exit the shell gracefully
-            } else {
-                perror("fgets"); // Print an error message if fgets() fails
-                exit(EXIT_FAILURE);
-            }
-        }
-        input[strcspn(input, "\n")] = '\0'; /*Remove trailing newline*/
+int main(int argc, char **argv)
+{
+  // Load config files, if any.
 
-        /* 
-        *Parse the input into individual arguments
-        */
-        int num_args = parse_input(input, args);
-        if (num_args == -1) {
-            fprintf(stderr, "Error: Too many arguments\n");
-            continue;
-        } else if (num_args == -2) {
-            fprintf(stderr, "Error: Empty command\n");
-            continue;
-        }
+  // Run command loop.
+  lsh_loop();
 
-        /*
-        * Execute the command
-        */
-        execute_command(args);
+  // Perform any shutdown/cleanup.
 
-        /* 
-        *Free memory allocated for argument strings
-        */
-        free_args(args, num_args);
-    }
-
-    return 0;
+  return EXIT_SUCCESS;
 }
 
-void handle_sigint(int sig) {
-    printf("\n"); // Print a newline character
-    print_prompt(); /*
-                    * Printing the shell prompt
-                    */
-}
+void lsh_loop(void)
+{
+  char *line;
+  char **args;
+  int status;
 
-void print_prompt() {
-    printf("$ "); /* 
-                   * Print the shell prompt
-                   */
-    fflush(stdout); /* 
-                    * Flush stdout to ensure prompt is printed immediately
-                    */
-}
-
-int parse_input(char* input, char** args) {
-    int num_args = 0;
-    char* token = strtok(input, " ");
-    while (token != NULL && num_args < MAX_ARGS) {
-        if (strlen(token) > MAX_INPUT_LENGTH) {
-            fprintf(stderr, "Error: Argument too long\n");
-            return -1;
-        }
-        args[num_args] = malloc(strlen(token) + 1); /*
-                                                     * Allocate memory for argument string
-                                                     */
-        if (args[num_args] == NULL) {
-            perror("malloc"); /* 
-                               * Print an error message if malloc() fails
-                               */
-            exit(EXIT_FAILURE);
-        }
-        strcpy(args[num_args], token);
-        num_args++;
-        token = strtok(NULL, " ");
-    }
-    if (num_args == 0) {
-        return -2;
-    } else if (num_args == MAX_ARGS && token != NULL) {
-        return -1;
-    }
-    args[num_args] = NULL; /* 
-                            * Add a NULL terminator to the argument list
-                            */
-    return num_args;
-}
-    
-void execute_command(char** args) {
-    pid_t pid = fork(); /* 
-                         *Create a child proces
-                         */
-if (pid == -1) {
-perror("fork"); /
-* Print an error message if fork() fails
-/
-exit(EXIT_FAILURE);
-} else if (pid == 0) {
-/ This is the child process
-*
-/
-int ret = execvp(args[0], args); // Execute the command
-if (ret == -1) {
-perror("execvp"); /
-* Print an error message if execvp() fails
-/
-exit(EXIT_FAILURE);
-}
-} else {
-/
-* This is the parent process
-/
-int status;
-waitpid(pid, &status, 0); /
-* Wait for the child process to complete
-*/
-}
-free_args(args, MAX_ARGS);
-}
-
-void handle_sigint(int sig) {
-printf("\n");
-print_prompt();
-}
-
-void print_prompt() {
-printf("$ ");
-fflush(stdout);
-}
-
-int parse_input(char* input, char** args) {
-int num_args = 0;
-char* token = strtok(input, " ");
-while (token != NULL && num_args < MAX_ARGS) {
-args[num_args] = malloc(strlen(token) + 1);
-strcpy(args[num_args], token);
-num_args++;
-token = strtok(NULL, " ");
-}
-args[num_args] = NULL;
-return num_args;
-}
-
-void free_args(char** args, int num_args) {
-for (int i = 0; i < num_args; i++) {
-free(args[i]);
-}
-}
-
-int main(int argc, char** argv) {
-char input[MAX_INPUT_LENGTH];
-char* args[MAX_ARGS];
-int status;
-/*
-* Register a signal handler for SIGINT (interrupt signal)
-*/
-signal(SIGINT, handle_sigint);
-
-while (1) {
+  do {
     print_prompt();
-    if (fgets(input, MAX_INPUT_LENGTH, stdin) == NULL) {
-        if (feof(stdin)) {
-            printf("Exiting...\n");
-            exit(EXIT_SUCCESS);
-        } else {
-            perror("fgets");
-            exit(EXIT_FAILURE);
-        }
-    }
-    input[strcspn(input, "\n")] = '\0';
+    line = lsh_read_line();
+    args = lsh_split_line(line);
+    status = lsh_execute(args);
 
-    /* 
-    *Parse the input into individual arguments
-    */
-    int num_args = parse_input(input, args);
-    if (num_args == -1) {
-        fprintf(stderr, "Error: Too many arguments\n");
-        continue;
-    } else if (num_args == -2) {
-        fprintf(stderr, "Error: Empty command\n");
-        continue;
-    }
-
-    /*
-    * Execute the command
-    */
-    execute_command(args);
+    free(line);
+    free_args(args, MAX_ARGS);
+  } while (status);
 }
 
+void print_prompt() {
+  printf("> ");
+}
+
+char *lsh_read_line(void)
+{
+  int bufsize = MAX_INPUT_LENGTH;
+  int position = 0;
+  char *buffer = malloc(sizeof(char) * bufsize);
+  int c;
+
+  if (!buffer) {
+    fprintf(stderr, "lsh: allocation error\n");
+    exit(EXIT_FAILURE);
+  }
+
+  while (1) {
+    // Read a character
+    c = getchar();
+
+    // If we hit EOF, replace it with a null character and return.
+    if (c == EOF || c == '\n') {
+      buffer[position] = '\0';
+      return buffer;
+    } else {
+      buffer[position] = c;
+    }
+    position++;
+
+    // If we have exceeded the buffer, reallocate.
+    if (position >= bufsize) {
+      bufsize += MAX_INPUT_LENGTH;
+      buffer = realloc(buffer, bufsize);
+      if (!buffer) {
+        fprintf(stderr, "lsh: allocation error\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
+}
+
+char **lsh_split_line(char *line)
+{
+  int bufsize = MAX_ARGS, position = 0;
+  char **tokens = malloc(bufsize * sizeof(char*));
+  char *token;
+
+  if (!tokens) {
+    fprintf(stderr, "lsh: allocation error\n");
+    exit(EXIT_FAILURE);
+  }
+
+  token = strtok(line, " \t\r\n\a");
+  while (token != NULL) {
+    tokens[position] = token;
+    position++;
+
+    if (position >= bufsize) {
+      bufsize += MAX_ARGS;
+      tokens = realloc(tokens, bufsize * sizeof(char*));
+      if (!tokens) {
+        fprintf(stderr, "lsh: allocation error\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    token = strtok(NULL, " \t\r\n\a");
+  }
+  tokens[position] = NULL;
+  return tokens;
+}
+
+int lsh_launch(char **args)
+{
+  pid_t pid, wpid;
+  int status;
+
+  pid = fork();
+  if (pid == 0) {
+// Child process
+if (execvp(args[0], args) == -1) {
+perror("lsh");
+}
+exit(EXIT_FAILURE);
+} else if (pid < 0) {
+// Error forking
+perror("lsh");
+} else {
+// Parent process
+do {
+wpid = waitpid(pid, &status, WUNTRACED);
+} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+}
+
+return 1;
+}
+
+int lsh_cd(char **args)
+{
+if (args[1] == NULL) {
+fprintf(stderr, "lsh: expected argument to "cd"\n");
+} else {
+if (chdir(args[1]) != 0) {
+perror("lsh");
+}
+}
+return 1;
+}
+
+int lsh_help(char **args)
+{
+printf("LSH - a simple shell\n");
+printf("Type program names and arguments, and hit enter.\n");
+printf("The following are built in:\n");
+
+for (int i = 0; i < lsh_num_builtins(); i++) {
+printf(" %s\n", builtin_str[i]);
+}
+
+printf("Use the man command for information on other programs.\n");
+return 1;
+}
+
+int lsh_exit(char **args)
+{
 return 0;
+}
+
+int lsh_execute(char **args)
+{
+if (args[0] == NULL) {
+// An empty command was entered.
+return 1;
+}
+
+for (int i = 0; i < lsh_num_builtins(); i++) {
+if (strcmp(args[0], builtin_str[i]) == 0) {
+return (*builtin_func[i])(args);
+}
+}
+
+return lsh_launch(args);
+}
+
+int lsh_num_builtins() {
+return sizeof(builtin_str) / sizeof(char *);
 }
