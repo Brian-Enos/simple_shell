@@ -25,7 +25,7 @@ int execute(char **args, char **env);
 char *getpath(char **env);
 void sig_handler(int signum);
 void prompt(void);
-nt access(const char *pathname, int mode);
+int access(const char *pathname, int mode);
 int chdir(const char *path);
 int close(int fd);
 int closedir(DIR *dirp);
