@@ -12,7 +12,9 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
-/* function prototypes */
+/* 
+* function prototypes 
+*/
 int _strcmp(char *s1, char *s2);
 char *_strcat(char *dest, char *src);
 char *_strdup(char *str);
@@ -55,12 +57,14 @@ pid_t waitpid(pid_t pid, int *status, int options);
 pid_t wait3(int *status, int options, struct rusage *rusage);
 pid_t wait4(pid_t pid, int *status, int options, struct rusage *rusage);
 
-/* helper functions */
+/* 
+* helper functions 
+*/
 int count_words(char *str, char *delim);
 void free_args(char **args);
 int check_path(char **args, char **env, char *command);
 int check_builtins(char **args, char **env);
 void print_env(char **env);
 
-#endif /* MAIN_H */
+#endif 
 
