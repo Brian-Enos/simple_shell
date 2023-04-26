@@ -17,6 +17,22 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+
+
+
+
+#define DONT_CREATE_NEW_CHILD_PROCESS 6
+#define TERMINATE_PROCESS_EXECUTION 5
+#define PREFIX 4
+#define NEGATIVE 0
+#define LAUNCH_RUNTIME_PROCESS 7
+#define EQUAL 3
+#define POSITIVE 1
+#define NONE 2
+
+
+
+
 #define READ_BUF_SIZE 1024
 #define BUF_FLUSH -1
 #define WRITE_BUF_SIZE 1024
@@ -36,6 +52,36 @@
 
 #define HIST_FILE	".simple_shell_history"
 #define HIST_MAX	4096
+
+
+
+
+
+
+
+extern int status;
+extern char **environ;
+extern int line_num;
+extern char *nameOfShell;
+
+
+
+typedef struct Alias
+{
+	char *node_name;
+	char *nodeValue;
+	struct Alias *nextNode;
+} alias;
+
+
+
+
+
+
+
+
+
+
 
 
 extern char **environ;
@@ -209,6 +255,54 @@ int build_history_list(info_t *info, char *buf, int linecount);
 int renumber_history(info_t *info);
 int write_history(info_t *info);
 char *get_history_file(info_t *info);
+
+
+
+
+
+
+
+
+
+
+char *input_san(char *old_buf, size_t *old_size);
+int and_or(char **arguements, char operator, int last_compare);
+char *checkIfNotBuiltIn(char **arguements);
+int compareString(char *s1, char *s2, int pref_or_match);
+char *findArrayElement(char **array, char *itemName);
+int input_err_check(char *pointer);
+int checkIfCommandInbuilt(char **arguements);
+char **createArray(char *string, char endOfListEntryChar, char **ifSemiColonPointer);
+void displayErrorMessage(char *arg0, char *arg1);
+void *_realloc(void *pointer, unsigned int old_size, unsigned int createdArraySize);
+int _getline(char **line_pointer, size_t *n, int file);
+int commandRuntimeHandler(char **arguements);
+int changeDirectory(char *name);
+int runCommand(char **arguements);
+char *copyString(char *src);
+char *string_concat(char *s1, char *s2);
+int deleteEnvironmentVariable(const char *name);
+int getStringLength(char *string);
+
+
+int displayAliases(alias *aliasPointer);
+int stringToInteger(char *s);
+int displayAliasValue(char *arg, alias *aliasPointer);
+int configureAlias(char *arg, alias *aliasPointer, char *setValue);
+int replaceIfAlias(char **arguements, alias *aliasPointer);
+char *_itoa(int n);
+
+
+char **duplicateArray(char **previousArray, int createdArraySize);
+int configureEnvironmentVariable(const char *name, const char *value);
+char *checkIfArgumentIsVariable(char *arg);
+int list_len(char **list, char *entry);
+int releaseArray(char **arguements);
+int displayEnvironMentVariable(void);
+int commandAliasProcessing(char **arguements, int free);
+int releaseAlias(alias *aliasPointer);
+
+
 
 #endif 
 
