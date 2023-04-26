@@ -1,10 +1,10 @@
 #include "main.h"
 
 int status = 0;
-
 int line_num = 1;
-
 char *nameOfShell = NULL;
+
+
 
 int main(__attribute__((unused))int ac, char **av)
 {
