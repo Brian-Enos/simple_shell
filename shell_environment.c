@@ -1,96 +1,92 @@
 #include "main.h"
-int status;
 
-
-
-
-int displayEnvironMentVariable(void)
+/**
+ * _myenv - prints the current environment
+ * @info: Structure containing potential arguments. Used to maintain
+ * constant function prototype
+ * Return: Always 0
+ */
+int _myenv(info_t *info)
 {
-	char **pointer = environ;
-
-	while (*pointer != NULL)
-	{
-		write(STDOUT_FILENO, *pointer, getStringLength(*pointer));
-		write(STDOUT_FILENO, "\n", 1);
-		pointer++;
-	}
-
-	status = 0;
-
-	return (DONT_CREATE_NEW_CHILD_PROCESS);
+	print_list_str(info->env);
+	return (0);
 }
 
-
-
-
-int configureEnvironmentVariable(const char *name, const char *value)
+/**
+ * _getenv - gets the value of an environ variable
+ * @info: Structure containing potential arguments. Used to maintain
+ * @name: env var name
+ *
+ * Return: the value
+ */
+char *_getenv(info_t *info, const char *name)
 {
-	char **new_environ;
-	char *buffer;
-	char *buffer_temporary;
-	char *element_pointer = findArrayElement(environ, (char *) name);
-	int len;
+	list_t *node = info->env;
+	char *p;
 
-	if (value == NULL)
+	while (node)
 	{
-		write(STDERR_FILENO, "setenv: no value given\n", 23);
-		status = 2;
-		return (DONT_CREATE_NEW_CHILD_PROCESS);
+		p = starts_with(node->str, name);
+		if (p && *p)
+			return (p);
+		node = node->next;
 	}
-
-	buffer = string_concat((char *)name, "=");
-  
-	buffer_temporary = string_concat(buffer, (char *)value);
-  
-	free(buffer);
-  
-	buffer = buffer_temporary;
-
-	if (element_pointer == NULL)
-	{
-		len = list_len(environ, NULL);
-		new_environ = duplicateArray(environ, len + 1);
-		new_environ[len - 1] = buffer;
-		new_environ[len] = NULL;
-		releaseArray(environ);
-		environ = new_environ;
-    
-    
-		return (DONT_CREATE_NEW_CHILD_PROCESS);
-	}
-
-	len = list_len(environ, (char *)name);
-	free(environ[len]);
-	environ[len] = buffer;
-
-	status = 0;
-
-	return (DONT_CREATE_NEW_CHILD_PROCESS);
+	return (NULL);
 }
 
-
-
-int deleteEnvironmentVariable(const char *name)
+/**
+ * _mysetenv - Initialize a new environment variable,
+ *             or modify an existing one
+ * @info: Structure containing potential arguments. Used to maintain
+ *        constant function prototype.
+ *  Return: Always 0
+ */
+int _mysetenv(info_t *info)
 {
-	char **env_pointer;
-	int len = list_len(environ, (char *)name);
-
-	if (len == -1)
+	if (info->argc != 3)
 	{
-		write(STDERR_FILENO, "unsetenv: variable not found\n", 29);
-		status = 2;
-		return (DONT_CREATE_NEW_CHILD_PROCESS);
+		_eputs("Incorrect number of arguements\n");
+		return (1);
 	}
+	if (_setenv(info, info->argv[1], info->argv[2]))
+		return (0);
+	return (1);
+}
 
-	env_pointer = environ + len;
-	free(*env_pointer);
-	while (*(env_pointer + 1) != NULL)
+/**
+ * _myunsetenv - Remove an environment variable
+ * @info: Structure containing potential arguments. Used to maintain
+ *        constant function prototype.
+ *  Return: Always 0
+ */
+int _myunsetenv(info_t *info)
+{
+	int i;
+
+	if (info->argc == 1)
 	{
-		*env_pointer = *(env_pointer + 1);
-		env_pointer++;
+		_eputs("Too few arguements.\n");
+		return (1);
 	}
-	*env_pointer = NULL;
-	status = 0;
+	for (i = 1; i <= info->argc; i++)
+		_unsetenv(info, info->argv[i]);
 
-	return (DONT_CREATE_NEW_CHILD_PROCESS);
+	return (0);
+}
+
+/**
+ * populate_env_list - populates env linked list
+ * @info: Structure containing potential arguments. Used to maintain
+ *          constant function prototype.
+ * Return: Always 0
+ */
+int populate_env_list(info_t *info)
+{
+	list_t *node = NULL;
+	size_t i;
+
+	for (i = 0; environ[i]; i++)
+		add_node_end(&node, environ[i], 0);
+	info->env = node;
+	return (0);
 }
