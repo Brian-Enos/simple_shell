@@ -356,6 +356,8 @@ Simple shell 1.0 +
   alex@~$
   ```
 #### Repo:
+
+
  - GitHub repository: `simple_shell`
 
 ### Task 13. alias
