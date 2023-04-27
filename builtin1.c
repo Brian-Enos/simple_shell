@@ -113,7 +113,3 @@ int _myalias(info_t *info)
 
 	return (0);
 }
-Footer
-© 2023 GitHub, Inc.
-Footer navigation
-Terms
